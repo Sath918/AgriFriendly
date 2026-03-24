@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>🌾 AgriFriendly Dashboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    body { font-family: 'Outfit', sans-serif; }
+    .auth-card { max-width: 400px; margin: auto; margin-top: 10vh; }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #1f6b1f, #238823);">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="/">🌾 AgriFriendly</a>
+      <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navmenu">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navmenu">
+        <ul class="navbar-nav ms-auto">
+          {% if request.cookies.get('jwt_token') %}
+          <li class="nav-item"><a class="nav-link" href="/">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="/history">History</a></li>
+          <li class="nav-item"><a class="nav-link" href="/expenses">Expenses</a></li>
+          <li class="nav-item"><a class="nav-link" href="/incomes">Incomes</a></li>
+          <li class="nav-item"><a class="nav-link" href="/tips">Community Tips</a></li>
+          <li class="nav-item"><a class="nav-link text-warning" href="/logout">Logout</a></li>
+          {% else %}
+          <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
+          <li class="nav-item"><a class="nav-link" href="/register">Register</a></li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container my-4">
+    {% block content %}{% endblock %}
+  </div>
+
+  <!-- Smart Calculator: Calcy -->
+  {% if request.cookies.get('jwt_token') %}
+  <button id="calcy-btn" class="btn btn-success text-warning rounded-circle shadow-lg" style="position: fixed; top: 80px; right: 20px; z-index: 1050; width: 65px; height: 65px; font-size: 1.8rem; display: flex; align-items: center; justify-content: center; animation: popIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 8px 25px rgba(35, 136, 35, 0.5) !important; transition: transform 0.2s ease;" data-bs-toggle="modal" data-bs-target="#calcyModal" title="Smart Calculator Calcy" onmouseover="this.style.transform='scale(1.1) rotate(10deg)'" onmouseout="this.style.transform='scale(1) rotate(0deg)'">
+    🧮
+  </button>
+
+  <div class="modal fade" id="calcyModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content border-0 shadow-lg" style="background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(15px); border-radius: 20px;">
+        <div class="modal-header text-white border-bottom-0" style="background: linear-gradient(135deg, #1f6b1f, #28a745); border-radius: 20px 20px 0 0;">
+          <h5 class="modal-title fw-bold">🧮 Smart Calcy</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <input type="text" id="calcDisplay" class="form-control mb-3 text-end fs-3 fw-bold" style="border: 2px solid #28a745; background: #f0fff8; color: #1e7e34; border-radius: 12px; height: 60px;" readonly placeholder="0">
+          <div class="row g-2">
+            <div class="col-6"><button class="btn btn-danger w-100 fw-bold border-0 shadow-sm" onclick="calcClear()">Clear</button></div>
+            <div class="col-6"><button class="btn btn-warning text-dark w-100 fw-bold border-0 shadow-sm" onclick="calcBackspace()">⌫ Erase</button></div>
+            
+            <div class="col-3"><button class="btn btn-light w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('7')">7</button></div>
+            <div class="col-3"><button class="btn btn-light w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('8')">8</button></div>
+            <div class="col-3"><button class="btn btn-light w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('9')">9</button></div>
+            <div class="col-3"><button class="btn btn-warning text-dark w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('/')">÷</button></div>
+            
+            <div class="col-3"><button class="btn btn-light w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('4')">4</button></div>
+            <div class="col-3"><button class="btn btn-light w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('5')">5</button></div>
+            <div class="col-3"><button class="btn btn-light w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('6')">6</button></div>
+            <div class="col-3"><button class="btn btn-warning text-dark w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('*')">×</button></div>
+            
+            <div class="col-3"><button class="btn btn-light w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('1')">1</button></div>
+            <div class="col-3"><button class="btn btn-light w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('2')">2</button></div>
+            <div class="col-3"><button class="btn btn-light w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('3')">3</button></div>
+            <div class="col-3"><button class="btn btn-warning text-dark w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('-')">-</button></div>
+            
+            <div class="col-3"><button class="btn btn-light w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('.')">.</button></div>
+            <div class="col-3"><button class="btn btn-light w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('0')">0</button></div>
+            <div class="col-6"><button class="btn btn-warning text-dark w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('+')">+</button></div>
+            
+            <div class="col-12 mt-3"><button class="btn btn-success w-100 fw-bold fs-5 shadow-sm" style="border-radius: 12px;" onclick="calcEval()">=</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const calcDisplay = document.getElementById('calcDisplay');
+    function calcAppend(val) { calcDisplay.value = calcDisplay.value === '0' || calcDisplay.value === 'Error' ? val : calcDisplay.value + val; }
+    function calcClear() { calcDisplay.value = '0'; }
+    function calcBackspace() { calcDisplay.value = calcDisplay.value.length > 1 ? calcDisplay.value.slice(0, -1) : '0'; }
+    function calcEval() { 
+      try { calcDisplay.value = eval(calcDisplay.value) || '0'; }
+      catch(e) { calcDisplay.value = 'Error'; }
+    }
+  </script>
+  {% endif %}
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

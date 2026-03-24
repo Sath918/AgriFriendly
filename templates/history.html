@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row fade-in">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="fw-bold text-success mb-0">📚 Season History</h3>
+      <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary fw-bold rounded-pill px-4 shadow-sm">👈 Back</a>
+    </div>
+
+    {% if history_data %}
+      <div class="row g-4">
+        {% for item in history_data %}
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100 shadow-sm border-0 position-relative pb-3" style="border-radius: 16px; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 20px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='';">
+            <div class="card-header border-0 pb-0 pt-4 px-4 bg-transparent">
+               <div class="d-flex justify-content-between align-items-center mb-2">
+                 <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill">Archived Season</span>
+                 <small class="text-muted fw-bold">{{ item.budget[6][:10] if item.budget[6] else 'N/A' }}</small>
+               </div>
+               <h4 class="fw-bold text-dark mb-1">{{ item.budget[3] }}</h4>
+               <p class="text-success fw-bold small mb-0">{{ item.budget[2] }} Season</p>
+            </div>
+            <div class="card-body px-4">
+               <div class="p-3 bg-light rounded-3 mb-3">
+                  <div class="d-flex justify-content-between pb-2 mb-2 border-bottom border-secondary-subtle">
+                    <span class="text-muted fw-bold small text-uppercase">Total Expense:</span>
+                    <span class="fw-bold text-danger">₹{{ item.total_exp }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between">
+                    <span class="text-muted fw-bold small text-uppercase">Total Income:</span>
+                    <span class="fw-bold text-success">₹{{ item.total_inc }}</span>
+                  </div>
+               </div>
+              <div class="d-flex justify-content-between {% if item.profit >= 0 %}bg-success-subtle border-success{% else %}bg-danger-subtle border-danger{% endif %} border p-3 rounded-3 align-items-center">
+                <span class="fw-bold text-uppercase small {% if item.profit >= 0 %}text-success{% else %}text-danger{% endif %}">{% if item.profit >= 0 %}Gross Profit:{% else %}Net Loss:{% endif %}</span>
+                <span class="fw-bold fs-4 {% if item.profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+                  ₹{{ item.profit if item.profit >= 0 else -item.profit }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="alert alert-info py-5 text-center shadow-lg border-0" style="border-radius: 20px;">
+         <div class="fs-1 mb-3">📭</div>
+         <h4 class="text-dark fw-bold mb-3">No Past Seasons Found</h4>
+         <p class="text-muted">You haven't archived or ended any seasons yet. Once you "Start New Season", your current records will be safely archived and displayed here!</p>
+         <a href="{{ url_for('dashboard') }}" class="btn btn-success fw-bold rounded-pill px-5 mt-2">Go to Dashboard</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

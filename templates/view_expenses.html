@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card p-3 fade-in">
+  <h4>All Expenses</h4>
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead><tr><th>ID</th><th>Date</th><th>Category</th><th>Amount</th><th>Notes</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for r in expenses %}
+        <tr>
+          <td>{{ r[0] }}</td>
+          <td>{{ r[3] }}</td>
+          <td>{{ r[4] }}</td>
+          <td>₹{{ r[5] }}</td>
+          <td>{{ r[6] }}</td>
+          <td><a href="{{ url_for('delete_expense', id=r[0]) }}" class="btn btn-sm btn-danger">Delete</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="mt-2"><strong>Total:</strong> ₹{{ total }}</div>
+</div>
+<div class="mt-3">
+  <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">👈 Back to Dashboard</a>
+  <a href="{{ url_for('dashboard') }}" class="btn btn-success">➕ Add New Expense</a>
+</div>
+
+{% endblock %}

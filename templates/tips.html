@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card p-3 fade-in">
+  <h4>Community Tips</h4>
+  <form method="POST" class="mb-3">
+    <div class="row g-2">
+      <div class="col-3"><input name="author" class="form-control" placeholder="Name"></div>
+      <div class="col-7"><input name="content" class="form-control" placeholder="Share a tip..."></div>
+      <div class="col-2"><button class="btn btn-success w-100">Post</button></div>
+    </div>
+  </form>
+
+  {% for t in tips %}
+  <div class="card p-2 mb-2">
+    <div class="small text-muted">{{ t[3][:10] }} by <strong>{{ t[1] }}</strong></div>
+    <div>{{ t[2] }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

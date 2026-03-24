@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row mb-4 fade-in">
+  <div class="col-md-8">
+    <div class="card p-4 mb-3" style="background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px);">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h3 class="mb-0 fw-bold">Welcome, {{ username }} 👋</h3>
+          <small class="text-muted">Manage your farm expenses, income, and budgets seamlessly.</small>
+        </div>
+        <div>
+          <div class="dropdown d-inline-block">
+            <button class="btn btn-outline-success fw-bold dropdown-toggle shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              ⬇️ Export Report
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" style="border-radius: 12px;">
+              <li><a class="dropdown-item fw-bold text-success py-2" href="{{ url_for('export_csv') }}">📄 Export as CSV (Excel)</a></li>
+              <li><a class="dropdown-item fw-bold text-danger py-2" target="_blank" href="{{ url_for('export_pdf') }}">🖨️ Print / Save as PDF</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <hr>
+      
+      <!-- Budget Header -->
+      {% if budget %}
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="text-success mb-0 d-inline-block text-truncate" style="max-width: 70%;">Active Season: <strong>{{ budget[3] }}</strong> ({{ budget[2] }})</h5>
+        <form method="POST" action="{{ url_for('end_season') }}" onsubmit="return confirm('Are you sure you want to completely end this season and start a new one?');" class="m-0">
+           <button type="submit" class="btn btn-warning btn-sm fw-bold shadow-sm">
+               ♻️ Start New Season
+           </button>
+        </form>
+      </div>
+      {% else %}
+      <div class="alert alert-info">
+        <strong>No Active Season!</strong> You haven't set up your farming loop yet. Create one below.
+      </div>
+      <form method="POST" action="{{ url_for('new_budget') }}" class="mb-3 p-3 border rounded border-success">
+        <h6>Create New Budget / Season</h6>
+        <div class="row g-2">
+          <div class="col-4"><input name="name" placeholder="Name (e.g. My Farm)" class="form-control" required/></div>
+          <div class="col-3">
+            <select name="season" class="form-select">
+              <option>Kuruvai</option><option>Samba</option><option>Navarai</option>
+            </select>
+          </div>
+          <div class="col-3"><input type="number" step="0.01" name="limit_amount" class="form-control" placeholder="Limit (Optional)"></div>
+          <div class="col-2"><button type="submit" class="btn btn-success w-100">Start</button></div>
+        </div>
+      </form>
+      {% endif %}
+
+      <div class="row">
+        <div class="col-sm-6">
+          <div class="card p-3 summary-card bg-light border-0 shadow-sm">
+            <div class="row g-2 align-items-center">
+              <div class="col-12 col-xl-6">
+                <small class="text-muted text-uppercase fw-bold d-block">Total Income</small>
+                <div class="summary-value text-success text-break" style="font-size: clamp(1.4rem, 2vw, 1.8rem);">₹{{ total_inc }}</div>
+              </div>
+              <div class="col-12 col-xl-6 text-xl-end">
+                <small class="text-muted text-uppercase fw-bold d-block">Total Expenses</small>
+                <div class="summary-value text-danger text-break" style="font-size: clamp(1.4rem, 2vw, 1.8rem);">₹{{ total_exp }}</div>
+              </div>
+            </div>
+            <div class="mt-3">
+              <span class="badge w-100 py-2 {% if profit>=0 %}bg-success{% else %}bg-danger{% endif %}" style="font-size: 1rem;">
+                {% if profit>=0 %}Gross Profit: ₹{{ profit }}{% else %}Net Loss: ₹{{ -profit }}{% endif %}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="card p-3 bg-light border-0 shadow-sm">
+             {% if budget %}
+                 <h6 class="text-muted text-uppercase fw-bold">Budget Status</h6>
+                 {% if budget[4] == 0 or not budget[4] %}
+                   <div class="alert alert-info mb-0 pb-2"><strong>Open Budget!</strong> You have spent ₹{{ total_exp }} so far</div>
+                   <div class="progress mt-2" style="height: 10px;">
+                     <div class="progress-bar bg-info progress-bar-striped progress-bar-animated" style="width: 100%;"></div>
+                   </div>
+                 {% elif total_exp > budget[4] %}
+                   <div class="alert alert-danger mb-0"><strong>Exceeded!</strong> Spent ₹{{ total_exp }} / ₹{{ budget[4] }}</div>
+                   <div class="progress mt-2" style="height: 10px;">
+                     <div class="progress-bar bg-danger" style="width: 100%;"></div>
+                   </div>
+                 {% else %}
+                   <div class="alert alert-success mb-0"><strong>Safe!</strong> Spent ₹{{ total_exp }} / ₹{{ budget[4] }}</div>
+                   <div class="progress mt-2" style="height: 10px;">
+                     <div class="progress-bar bg-success" style="width: {{ (total_exp / budget[4]) * 100 }}%;"></div>
+                   </div>
+                 {% endif %}
+             {% else %}
+                <small class="text-muted">Start a budget to see warnings.</small>
+             {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- forms: add expense & add income -->
+    {% if budget %}
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="card p-4 shadow-sm h-100">
+          <h6 class="text-success fw-bold">➖ Add Expense</h6>
+          <form method="POST" action="{{ url_for('add_expense') }}">
+            <div class="mb-2"><input type="date" name="date" class="form-control" required></div>
+            <div class="mb-2">
+              <select name="category" class="form-select" required>
+                <option>Seeds</option><option>Fertilizer</option><option>Labor</option><option>Irrigation</option><option>Others</option>
+              </select>
+            </div>
+            <div class="mb-2"><input name="amount" type="number" step="0.01" class="form-control" placeholder="Amount (₹)" required></div>
+            <div class="mb-3"><input name="notes" class="form-control" placeholder="Notes"></div>
+            <button class="btn btn-outline-danger w-100 fw-bold">Save Expense</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card p-4 shadow-sm h-100">
+          <h6 class="text-success fw-bold">➕ Add Income</h6>
+          <form method="POST" action="{{ url_for('add_income') }}">
+            <div class="mb-2"><input type="date" name="date" class="form-control" required></div>
+            <div class="mb-2"><input name="source" class="form-control" placeholder="Source (e.g., Crop Sale)" required></div>
+            <div class="mb-2"><input name="amount" type="number" step="0.01" class="form-control" placeholder="Amount (₹)" required></div>
+            <div class="mb-3"><input name="notes" class="form-control" placeholder="Notes"></div>
+            <button class="btn btn-outline-success w-100 fw-bold">Save Income</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% if budget %}
+    <!-- Recent Transactions Feed -->
+    <div class="card p-4 shadow-sm border-0 mt-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="text-success fw-bold mb-0">🕒 Recent Transactions</h6>
+        <small class="text-muted">Latest entries this season</small>
+      </div>
+      {% if recent_expenses or recent_incomes %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+             <tbody>
+                {% for e in recent_expenses %}
+                <tr>
+                   <td style="width: 15%;"><small class="text-muted fw-bold">{{ e[3][-5:] }}</small></td>
+                   <td><span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill">Expense</span></td>
+                   <td><strong>{{ e[4] }}</strong> <span class="text-muted small ms-2">{{ e[6] }}</span></td>
+                   <td class="text-end">
+                     <span class="fw-bold text-danger">-₹{{ e[5] }}</span>
+                     <button type="button" class="btn btn-sm btn-link text-primary p-0 border-0 ms-2" data-bs-toggle="modal" data-bs-target="#editExp{{ e[0] }}" title="Edit Expense">✏️</button>
+                     <form method="POST" action="{{ url_for('delete_expense', id=e[0]) }}" class="d-inline ms-1"><button type="submit" class="btn btn-sm btn-link text-danger p-0 border-0" title="Delete">❌</button></form>
+                   </td>
+                </tr>
+                
+                <!-- Edit Expense Modal -->
+                <div class="modal fade" id="editExp{{ e[0] }}" tabindex="-1">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow">
+                      <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title fw-bold">✏️ Edit Expense</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                      </div>
+                      <form method="POST" action="{{ url_for('edit_expense', id=e[0]) }}">
+                        <div class="modal-body p-4 text-start">
+                          <div class="mb-2"><label class="fw-bold form-label">Date</label><input type="date" name="date" class="form-control" value="{{ e[3] }}" required></div>
+                          <div class="mb-2">
+                            <label class="fw-bold form-label">Category</label>
+                            <select name="category" class="form-select" required>
+                              <option {% if e[4]=='Seeds' %}selected{% endif %}>Seeds</option>
+                              <option {% if e[4]=='Fertilizer' %}selected{% endif %}>Fertilizer</option>
+                              <option {% if e[4]=='Labor' %}selected{% endif %}>Labor</option>
+                              <option {% if e[4]=='Irrigation' %}selected{% endif %}>Irrigation</option>
+                              <option {% if e[4]=='Others' %}selected{% endif %}>Others</option>
+                            </select>
+                          </div>
+                          <div class="mb-2"><label class="fw-bold form-label">Amount (₹)</label><input name="amount" type="number" step="0.01" class="form-control" value="{{ e[5] }}" required></div>
+                          <div class="mb-3"><label class="fw-bold form-label">Notes</label><input name="notes" class="form-control" value="{{ e[6] }}"></div>
+                        </div>
+                        <div class="modal-footer bg-light">
+                          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                          <button type="submit" class="btn btn-danger fw-bold">Update Expense</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+                
+                {% endfor %}
+                {% for i in recent_incomes %}
+                <tr>
+                   <td style="width: 15%;"><small class="text-muted fw-bold">{{ i[3][-5:] }}</small></td>
+                   <td><span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">Income</span></td>
+                   <td><strong>{{ i[4] }}</strong> <span class="text-muted small ms-2">{{ i[6] }}</span></td>
+                   <td class="text-end">
+                     <span class="fw-bold text-success">+₹{{ i[5] }}</span>
+                     <button type="button" class="btn btn-sm btn-link text-primary p-0 border-0 ms-2" data-bs-toggle="modal" data-bs-target="#editInc{{ i[0] }}" title="Edit Income">✏️</button>
+                     <form method="POST" action="{{ url_for('delete_income', id=i[0]) }}" class="d-inline ms-1"><button type="submit" class="btn btn-sm btn-link text-danger p-0 border-0" title="Delete">❌</button></form>
+                   </td>
+                </tr>
+                
+                <!-- Edit Income Modal -->
+                <div class="modal fade" id="editInc{{ i[0] }}" tabindex="-1">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow">
+                      <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title fw-bold">✏️ Edit Income</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                      </div>
+                      <form method="POST" action="{{ url_for('edit_income', id=i[0]) }}">
+                        <div class="modal-body p-4 text-start">
+                          <div class="mb-2"><label class="fw-bold form-label">Date</label><input type="date" name="date" class="form-control" value="{{ i[3] }}" required></div>
+                          <div class="mb-2"><label class="fw-bold form-label">Source</label><input name="source" class="form-control" value="{{ i[4] }}" required></div>
+                          <div class="mb-2"><label class="fw-bold form-label">Amount (₹)</label><input name="amount" type="number" step="0.01" class="form-control" value="{{ i[5] }}" required></div>
+                          <div class="mb-3"><label class="fw-bold form-label">Notes</label><input name="notes" class="form-control" value="{{ i[6] }}"></div>
+                        </div>
+                        <div class="modal-footer bg-light">
+                          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                          <button type="submit" class="btn btn-success fw-bold">Update Income</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+                
+                {% endfor %}
+             </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center py-3 text-muted">
+           <small>No transactions entered yet for this active season.</small>
+        </div>
+      {% endif %}
+    </div>
+    {% endif %}
+    {% if budget %}
+    <!-- Charts -->
+    <div class="card p-4 shadow-sm border-0 mt-3">
+      <div class="row">
+        <div class="col-md-6">
+          <h6 class="fw-bold">Expenses by Category</h6>
+          <canvas id="catChart" height="200"></canvas>
+        </div>
+        <div class="col-md-6">
+          <h6 class="fw-bold">Monthly Trend</h6>
+          <canvas id="trendChart" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col-md-4">
+    <div class="card p-3 mb-3 shadow-sm border-0">
+      <h6 class="fw-bold text-success mb-3">Quick Actions</h6>
+      <a class="btn btn-outline-secondary w-100 mb-2" href="{{ url_for('view_expenses') }}">📋 View Expenses</a>
+      <a class="btn btn-outline-secondary w-100 mb-2" href="{{ url_for('view_incomes') }}">📋 View Incomes</a>
+      <a class="btn btn-outline-success w-100" href="{{ url_for('tips') }}">💡 Community Tips</a>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js - Deferred loading for perf -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js" defer onload="initCharts()"></script>
+<script>
+  function initCharts() {
+      {% if budget %}
+      // category chart
+      const catLabels = {{ labels|tojson }};
+      const catValues = {{ values|tojson }};
+      const ctx = document.getElementById('catChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels: catLabels, datasets:[{ data: catValues, borderWidth:0, backgroundColor: ['#28a745', '#17a2b8', '#ffc107', '#dc3545', '#6c757d'] }] },
+        options: { responsive:true, plugins:{legend:{position:'bottom'}}, cutout: '65%' }
+      });
+
+      // trend chart
+      const months = {{ months|tojson }};
+      const incSeries = {{ inc_series|tojson }};
+      const expSeries = {{ exp_series|tojson }};
+      const tctx = document.getElementById('trendChart').getContext('2d');
+      new Chart(tctx, {
+        type:'line',
+        data: {
+          labels: months,
+          datasets: [
+            { label:'Income', data: incSeries, borderColor: '#28a745', borderTopWidth: 3, tension:0.4, fill:false},
+            { label:'Expense', data: expSeries, borderColor: '#dc3545', borderTopWidth: 3, tension:0.4, fill:false}
+          ]
+        },
+        options:{ responsive:true }
+      });
+      {% endif %}
+  }
+</script>
+{% endblock %}

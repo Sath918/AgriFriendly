@@ -1,6 +1,0 @@
-__pycache__/
-*.pyc
-.idea/
-*.sqlite
-flask_error.log
-flask_out.log

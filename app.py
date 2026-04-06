@@ -277,7 +277,7 @@ def edit_income(id):
     amount = float(request.form.get('amount') or 0)
     notes = request.form.get('notes')
     query_db("UPDATE incomes SET date=?, source=?, amount=?, notes=? WHERE id=? AND user_id=?", 
-             (date, source, amount, notes, id, request.request_id) if hasattr(request, 'request_id') else (date, source, amount, notes, id, request.user_id), execute=True)
+             (date, source, amount, notes, id, request.user_id), execute=True)
     return redirect(request.referrer or url_for('dashboard'))
 
 @app.route('/tips', methods=['GET', 'POST'])

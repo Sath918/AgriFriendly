@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>AgriFriendly Report - {{ budget[3] }}</title>
+  <title>AgriFriendly Report - {{ budget[2] }}</title>
   <style>
     body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #2c3e50; line-height: 1.6; }
     h1 { color: #27ae60; border-bottom: 2px solid #27ae60; padding-bottom: 10px; margin-bottom: 5px; }
@@ -43,8 +43,8 @@
   
   <div style="margin-bottom: 30px;">
     <h2 style="margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px;">Season Details</h2>
-    <p><strong>Farm / Budget Name:</strong> {{ budget[3] }}</p>
-    <p><strong>Growing Season:</strong> {{ budget[2] }}</p>
+    <p><strong>Farm / Budget Name:</strong> {{ budget[2] }}</p>
+    <p><strong>Growing Season:</strong> {{ budget[3] }}</p>
     {% if budget[4] and budget[4] > 0 %}
     <p><strong>Predicted Budget Limit:</strong> ₹{{ budget[4] }}</p>
     {% else %}

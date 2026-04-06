@@ -22,6 +22,31 @@ body {
   transform: translateY(-2px);
 }
 
+/* Profile Icon & Dropdown */
+.profile-img-container {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #fff;
+  transition: transform 0.3s ease;
+}
+.dropdown-toggle::after {
+  display: none;
+}
+.dropdown-item {
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+.dropdown-item:hover {
+    background-color: #f0fff4;
+    color: #1f6b1f;
+    padding-left: 1.5rem;
+}
+.profile-preview img {
+    object-fit: cover;
+}
+
 /* Card Styling - Glassmorphism & Hover */
 .card {
   border-radius: 16px;

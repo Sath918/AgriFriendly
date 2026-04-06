@@ -13,29 +13,143 @@
   </style>
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #1f6b1f, #238823);">
-    <div class="container">
-      <a class="navbar-brand fw-bold" href="/">🌾 AgriFriendly</a>
-      <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navmenu">
+  <nav class="navbar navbar-expand-lg navbar-dark sticky-top shadow-sm py-2" style="background: linear-gradient(135deg, #1f6b1f, #238823);">
+    <div class="container d-flex align-items-center justify-content-between">
+      
+      <!-- Menu Toggle (Left) -->
+      <button class="navbar-toggler border-0 shadow-none px-0" type="button" data-bs-toggle="collapse" data-bs-target="#navmenu">
         <span class="navbar-toggler-icon"></span>
       </button>
+
+      <!-- Logo Brand (Center) -->
+      <a class="navbar-brand fw-bold fs-4 mx-auto position-absolute start-50 translate-middle-x" href="/" style="z-index: 10;">
+        🌾 AgriFriendly
+      </a>
+
+      <!-- Profile & Nav Items (Right) -->
+      <div class="d-flex align-items-center">
+        {% if request.cookies.get('jwt_token') %}
+        <div class="dropdown">
+          <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle text-white" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <div class="profile-img-container shadow-sm border border-2 border-white-50">
+              {% if request.user_profile_pic %}
+              <img src="{{ url_for('static', filename='uploads/profiles/' + request.user_profile_pic) }}" alt="Profile" class="w-100 h-100">
+              {% else %}
+              <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-success-subtle text-success fw-bold">
+                {{ request.username[0].upper() }}
+              </div>
+              {% endif %}
+            </div>
+            <span class="ms-2 d-none d-md-inline fw-semibold">{{ request.username }}</span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-3 fade-in" aria-labelledby="profileDropdown" style="border-radius: 12px; min-width: 220px;">
+            <li><h6 class="dropdown-header">Manage Account</h6></li>
+            <li><a class="dropdown-item py-2" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">📷 Change Photo</a></li>
+            <li><a class="dropdown-item py-2" href="#" data-bs-toggle="modal" data-bs-target="#accountModal">⚙️ Account Settings</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item py-2 text-danger fw-bold" href="/logout">🚪 Logout</a></li>
+          </ul>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Collapsible items (handled by JS toggler) -->
       <div class="collapse navbar-collapse" id="navmenu">
-        <ul class="navbar-nav ms-auto">
+        <ul class="navbar-nav ms-auto mt-2 mt-lg-0">
           {% if request.cookies.get('jwt_token') %}
           <li class="nav-item"><a class="nav-link" href="/">Dashboard</a></li>
           <li class="nav-item"><a class="nav-link" href="/history">History</a></li>
           <li class="nav-item"><a class="nav-link" href="/expenses">Expenses</a></li>
           <li class="nav-item"><a class="nav-link" href="/incomes">Incomes</a></li>
           <li class="nav-item"><a class="nav-link" href="/tips">Community Tips</a></li>
-          <li class="nav-item"><a class="nav-link text-warning" href="/logout">Logout</a></li>
           {% else %}
-          <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
-          <li class="nav-item"><a class="nav-link" href="/register">Register</a></li>
+          <li class="nav-item"><a class="nav-link px-3" href="/login">Login</a></li>
+          <li class="nav-item"><a class="nav-link px-3" href="/register">Register</a></li>
           {% endif %}
         </ul>
       </div>
+      
     </div>
   </nav>
+
+  <!-- Profile Image Upload Modal -->
+  <div class="modal fade" id="profileModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h5 class="modal-title fw-bold">Update Profile Picture</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4 text-center">
+            <div class="profile-preview mx-auto mb-4 border border-5 border-light shadow" style="width: 150px; height: 150px; border-radius: 50%; overflow: hidden; background: #f8f9fa;">
+                {% if request.user_profile_pic %}
+                <img src="{{ url_for('static', filename='uploads/profiles/' + request.user_profile_pic) }}" id="imagePreview" alt="Profile" class="w-100 h-100 object-fit-cover">
+                {% else %}
+                <div id="textPreview" class="w-100 h-100 d-flex align-items-center justify-content-center bg-success-subtle text-success fs-1 fw-bold">
+                    {{ request.username[0].upper() }}
+                </div>
+                {% endif %}
+            </div>
+            <form action="/upload_profile" method="POST" enctype="multipart/form-data">
+                <input type="file" name="profile_pic" class="form-control mb-3" accept="image/*" required onchange="previewImage(this)">
+                <button type="submit" class="btn btn-success w-100 py-3 shadow-sm rounded-pill fw-bold">Upload & Update</button>
+            </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Account Settings Modal -->
+  <div class="modal fade" id="accountModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h5 class="modal-title fw-bold">⚙️ Account Settings</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form action="/update_profile" method="POST">
+          <div class="modal-body p-4">
+            <div class="mb-4">
+              <label class="form-label fw-bold">Update Username</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0">👤</span>
+                <input type="text" name="username" class="form-control border-start-0" value="{{ request.username }}" required>
+              </div>
+              <small class="text-muted d-block mt-1">Note: You will be logged out after changing this.</small>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">New Password</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0">🔑</span>
+                <input type="password" name="password" class="form-control border-start-0" placeholder="Keep empty to leave unchanged">
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer border-top-0 pt-0">
+            <button type="submit" class="btn btn-success w-100 py-3 rounded-pill fw-bold shadow-sm">Save Account Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var preview = document.getElementById('imagePreview');
+                if(!preview) {
+                    var container = document.querySelector('.profile-preview');
+                    container.innerHTML = '<img id="imagePreview" class="w-100 h-100 object-fit-cover">';
+                    preview = document.getElementById('imagePreview');
+                }
+                preview.src = e.target.result;
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+  </script>
 
   <div class="container my-4">
     {% block content %}{% endblock %}

@@ -37,7 +37,7 @@ def decode_jwt(token):
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT, profile_pic TEXT)''')
     c.execute('''CREATE TABLE IF NOT EXISTS budget
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   user_id INTEGER,
@@ -97,6 +97,8 @@ def login_required(f):
             return redirect(url_for('login'))
         request.user_id = payload["user_id"]
         request.username = payload.get("username", "Farmer")
+        user = query_db("SELECT profile_pic FROM users WHERE id=?", (request.user_id,), one=True)
+        request.user_profile_pic = user[0] if user and user[0] else None
         return f(*args, **kwargs)
     return decorated_function
 
@@ -279,6 +281,52 @@ def edit_income(id):
     query_db("UPDATE incomes SET date=?, source=?, amount=?, notes=? WHERE id=? AND user_id=?", 
              (date, source, amount, notes, id, request.user_id), execute=True)
     return redirect(request.referrer or url_for('dashboard'))
+
+@app.route('/upload_profile', methods=['POST'])
+@login_required
+def upload_profile():
+    if 'profile_pic' not in request.files:
+        return redirect(request.referrer or url_for('dashboard'))
+    file = request.files['profile_pic']
+    if file.filename == '':
+        return redirect(request.referrer or url_for('dashboard'))
+    
+    if file:
+        filename = f"profile_{request.user_id}_{int(datetime.now().timestamp())}.png"
+        path = os.path.join('static', 'uploads', 'profiles', filename)
+        file.save(path)
+        query_db("UPDATE users SET profile_pic=? WHERE id=?", (filename, request.user_id), execute=True)
+        # Update current user profile pic in request
+        request.user_profile_pic = filename 
+        
+    return redirect(request.referrer or url_for('dashboard'))
+
+@app.route('/update_profile', methods=['POST'])
+@login_required
+def update_profile():
+    new_username = request.form.get('username')
+    new_password = request.form.get('password')
+    
+    if not new_username:
+        return redirect(request.referrer or url_for('dashboard'))
+        
+    # Check if username is taken by someone else
+    existing = query_db("SELECT id FROM users WHERE username=? AND id != ?", (new_username, request.user_id), one=True)
+    if existing:
+        # In a real app we'd pass an error message via flash or similar
+        return redirect(request.referrer or url_for('dashboard'))
+
+    if new_password:
+        hashed = generate_password_hash(new_password)
+        query_db("UPDATE users SET username=?, password=? WHERE id=?", (new_username, hashed, request.user_id), execute=True)
+    else:
+        query_db("UPDATE users SET username=? WHERE id=?", (new_username, request.user_id), execute=True)
+    
+    # We should ideally regenerate the token if username changed, but for simplicity we'll just redirect
+    # Since the token is checked every request and contains the old username, update_jwt logic would be better
+    # But for this task, basic update is requested.
+    
+    return redirect(url_for('logout')) # Force re-login with new credentials
 
 @app.route('/tips', methods=['GET', 'POST'])
 def tips():

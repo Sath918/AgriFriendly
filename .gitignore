@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+
+# Database
+*.sqlite
+
+# Logs
+*.log
+
+# IDE
+.idea/
+
+# Uploads
+static/uploads/

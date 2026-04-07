@@ -1,20 +1,41 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="card p-3 fade-in">
-  <h4>Community Tips</h4>
-  <form method="POST" class="mb-3">
-    <div class="row g-2">
-      <div class="col-3"><input name="author" class="form-control" placeholder="Name"></div>
-      <div class="col-7"><input name="content" class="form-control" placeholder="Share a tip..."></div>
-      <div class="col-2"><button class="btn btn-success w-100">Post</button></div>
+<div class="card p-4 fade-in border-0 shadow-sm mb-4">
+  <div class="d-flex align-items-center mb-4 text-success">
+    <i class="bi bi-lightbulb-fill fs-3 me-3"></i>
+    <h3 class="fw-bold text-dark mb-0">Community Tips</h3>
+  </div>
+
+  <form method="POST" class="mb-5 p-4 bg-light rounded-4 border border-success border-opacity-10">
+    <h6 class="fw-bold mb-3 small text-muted text-uppercase">Share your wisdom</h6>
+    <div class="row g-3">
+      <div class="col-md-3"><input name="author" class="form-control" placeholder="Your Name" required></div>
+      <div class="col-md-7"><input name="content" class="form-control" placeholder="Share a tip with other farmers..." required></div>
+      <div class="col-md-2"><button class="btn btn-success w-100 fw-bold">Post Tip</button></div>
     </div>
   </form>
 
-  {% for t in tips %}
-  <div class="card p-2 mb-2">
-    <div class="small text-muted">{{ t[3][:10] }} by <strong>{{ t[1] }}</strong></div>
-    <div>{{ t[2] }}</div>
+  <div class="row g-3">
+    {% for t in tips %}
+    <div class="col-12">
+      <div class="card p-3 mb-0 border-0 bg-light bg-opacity-50 hover-lift">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3 py-2 fw-bold small">
+            <i class="bi bi-person-fill me-1"></i>{{ t[1] }}
+          </span>
+          <small class="text-muted fw-bold x-small">{{ t[3][:10] }}</small>
+        </div>
+        <p class="mb-0 text-dark">{{ t[2] }}</p>
+      </div>
+    </div>
+    {% endfor %}
   </div>
-  {% endfor %}
+
+  {% if not tips %}
+  <div class="text-center py-4 text-muted border border-dashed rounded-4">
+     <small>No tips shared yet. Be the first to share one!</small>
+  </div>
+  {% endif %}
 </div>
+
 {% endblock %}

@@ -86,19 +86,25 @@ def query_db(q, args=(), one=False, execute=False):
     conn.close()
     return (rv[0] if rv else None) if one else rv
 
+@app.before_request
+def load_user():
+    request.user_id = None
+    request.username = None
+    request.user_profile_pic = None
+    token = request.cookies.get("jwt_token")
+    if token:
+        payload = decode_jwt(token)
+        if payload and "user_id" in payload:
+            request.user_id = payload["user_id"]
+            request.username = payload.get("username", "Farmer")
+            user = query_db("SELECT profile_pic FROM users WHERE id=?", (request.user_id,), one=True)
+            request.user_profile_pic = user[0] if user and user[0] else None
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        token = request.cookies.get("jwt_token")
-        if not token:
+        if not request.user_id:
             return redirect(url_for('login'))
-        payload = decode_jwt(token)
-        if not payload or "user_id" not in payload:
-            return redirect(url_for('login'))
-        request.user_id = payload["user_id"]
-        request.username = payload.get("username", "Farmer")
-        user = query_db("SELECT profile_pic FROM users WHERE id=?", (request.user_id,), one=True)
-        request.user_profile_pic = user[0] if user and user[0] else None
         return f(*args, **kwargs)
     return decorated_function
 

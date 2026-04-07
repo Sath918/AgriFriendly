@@ -5,7 +5,9 @@
   <title>🌾 AgriFriendly Dashboard</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
     body { font-family: 'Outfit', sans-serif; }
@@ -13,27 +15,42 @@
   </style>
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark sticky-top shadow-sm py-2" style="background: linear-gradient(135deg, #1f6b1f, #238823);">
+  <nav class="navbar navbar-expand-lg navbar-dark sticky-top py-2" style="background: var(--nav-gradient);">
     <div class="container d-flex align-items-center justify-content-between">
       
-      <!-- Menu Toggle (Left) -->
-      <button class="navbar-toggler border-0 shadow-none px-0" type="button" data-bs-toggle="collapse" data-bs-target="#navmenu">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+      <div class="d-flex align-items-center">
+        <!-- Menu Toggle (Mobile) -->
+        <button class="navbar-toggler border-0 shadow-none px-0 me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
+          <span class="navbar-toggler-icon"></span>
+        </button>
 
-      <!-- Logo Brand (Center) -->
-      <a class="navbar-brand fw-bold fs-4 mx-auto position-absolute start-50 translate-middle-x" href="/" style="z-index: 10;">
-        🌾 AgriFriendly
-      </a>
+        <!-- Logo Brand -->
+        <a class="navbar-brand fw-bold fs-4 d-flex align-items-center" href="/">
+          <span class="me-2">🌾</span> <span class="d-none d-sm-inline">AgriFriendly</span><span class="d-inline d-sm-none">Agri</span>
+        </a>
+      </div>
+
+      <!-- Desktop Nav Items -->
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav mx-auto">
+          {% if request.cookies.get('jwt_token') %}
+          <li class="nav-item"><a class="nav-link px-3" href="/"><i class="bi bi-speedometer2 me-1"></i> Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link px-3" href="/history">History</a></li>
+          <li class="nav-item"><a class="nav-link px-3" href="/expenses">Expenses</a></li>
+          <li class="nav-item"><a class="nav-link px-3" href="/incomes">Incomes</a></li>
+          <li class="nav-item"><a class="nav-link px-3" href="/tips">Community</a></li>
+          {% endif %}
+        </ul>
+      </div>
 
       <!-- Profile & Nav Items (Right) -->
       <div class="d-flex align-items-center">
-        {% if request.cookies.get('jwt_token') %}
+        {% if request.username %}
         <div class="dropdown">
           <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle text-white" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
             <div class="profile-img-container shadow-sm border border-2 border-white-50">
               {% if request.user_profile_pic %}
-              <img src="{{ url_for('static', filename='uploads/profiles/' + request.user_profile_pic) }}" alt="Profile" class="w-100 h-100">
+              <img src="{{ url_for('static', filename='uploads/profiles/' + request.user_profile_pic) }}" alt="Profile" class="w-100 h-100 object-fit-cover">
               {% else %}
               <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-success-subtle text-success fw-bold">
                 {{ request.username[0].upper() }}
@@ -43,56 +60,90 @@
             <span class="ms-2 d-none d-md-inline fw-semibold">{{ request.username }}</span>
           </a>
           <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-3 fade-in" aria-labelledby="profileDropdown" style="border-radius: 12px; min-width: 220px;">
-            <li><h6 class="dropdown-header">Manage Account</h6></li>
+            <li><h6 class="dropdown-header text-muted text-uppercase small">Manage Account</h6></li>
             <li><a class="dropdown-item py-2" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">📷 Change Photo</a></li>
             <li><a class="dropdown-item py-2" href="#" data-bs-toggle="modal" data-bs-target="#accountModal">⚙️ Account Settings</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item py-2 text-danger fw-bold" href="/logout">🚪 Logout</a></li>
           </ul>
         </div>
+        {% else %}
+        <div class="d-none d-lg-flex">
+          <a class="btn btn-sm btn-outline-light rounded-pill px-4 me-2" href="/login">Login</a>
+          <a class="btn btn-sm btn-light text-success rounded-pill px-4" href="/register">Register</a>
+        </div>
         {% endif %}
-      </div>
-
-      <!-- Collapsible items (handled by JS toggler) -->
-      <div class="collapse navbar-collapse" id="navmenu">
-        <ul class="navbar-nav ms-auto mt-2 mt-lg-0">
-          {% if request.cookies.get('jwt_token') %}
-          <li class="nav-item"><a class="nav-link" href="/">Dashboard</a></li>
-          <li class="nav-item"><a class="nav-link" href="/history">History</a></li>
-          <li class="nav-item"><a class="nav-link" href="/expenses">Expenses</a></li>
-          <li class="nav-item"><a class="nav-link" href="/incomes">Incomes</a></li>
-          <li class="nav-item"><a class="nav-link" href="/tips">Community Tips</a></li>
-          {% else %}
-          <li class="nav-item"><a class="nav-link px-3" href="/login">Login</a></li>
-          <li class="nav-item"><a class="nav-link px-3" href="/register">Register</a></li>
-          {% endif %}
-        </ul>
       </div>
       
     </div>
   </nav>
 
-  <!-- Profile Image Upload Modal -->
+  <!-- Offcanvas Sidebar (Mobile) -->
+  <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title fw-bold" id="offcanvasNavbarLabel">🌾 AgriFriendly</h5>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body p-0">
+      <ul class="navbar-nav justify-content-end flex-grow-1">
+        {% if request.cookies.get('jwt_token') %}
+        <li class="nav-item pt-4 px-4 pb-2"><small class="text-muted text-uppercase fw-bold">Main Menu</small></li>
+        <li class="nav-item"><a class="nav-link" href="/"><i class="bi bi-grid-fill me-2"></i> Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="/history">History</a></li>
+        <li class="nav-item"><a class="nav-link" href="/expenses">Expenses</a></li>
+        <li class="nav-item"><a class="nav-link" href="/incomes">Incomes</a></li>
+        <li class="nav-item"><a class="nav-link" href="/tips">Community Tips</a></li>
+        <li class="nav-item mt-4 px-4 pb-2"><small class="text-muted text-uppercase fw-bold">Account</small></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#accountModal">Settings</a></li>
+        <li class="nav-item"><a class="nav-link text-danger" href="/logout">Logout</a></li>
+        {% else %}
+        <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
+        <li class="nav-item"><a class="nav-link" href="/register">Register</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+
+  {% if request.username %}
+  <!-- Profile Image Upload Modal with Cropper -->
   <div class="modal fade" id="profileModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
         <div class="modal-header border-bottom-0 pb-0">
-          <h5 class="modal-title fw-bold">Update Profile Picture</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <h5 class="modal-title fw-bold">Change Profile Photo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" id="closeProfileModal"></button>
         </div>
         <div class="modal-body p-4 text-center">
-            <div class="profile-preview mx-auto mb-4 border border-5 border-light shadow" style="width: 150px; height: 150px; border-radius: 50%; overflow: hidden; background: #f8f9fa;">
+            <!-- Preview existing -->
+            <div class="profile-preview-container" id="initialPreview">
                 {% if request.user_profile_pic %}
-                <img src="{{ url_for('static', filename='uploads/profiles/' + request.user_profile_pic) }}" id="imagePreview" alt="Profile" class="w-100 h-100 object-fit-cover">
+                <img src="{{ url_for('static', filename='uploads/profiles/' + request.user_profile_pic) }}" alt="Profile">
                 {% else %}
-                <div id="textPreview" class="w-100 h-100 d-flex align-items-center justify-content-center bg-success-subtle text-success fs-1 fw-bold">
+                <div class="mx-auto bg-success-subtle text-success rounded-circle d-flex align-items-center justify-content-center" style="width:120px; height:120px; font-size: 3rem; font-weight:700;">
                     {{ request.username[0].upper() }}
                 </div>
                 {% endif %}
             </div>
-            <form action="/upload_profile" method="POST" enctype="multipart/form-data">
-                <input type="file" name="profile_pic" class="form-control mb-3" accept="image/*" required onchange="previewImage(this)">
-                <button type="submit" class="btn btn-success w-100 py-3 shadow-sm rounded-pill fw-bold">Upload & Update</button>
+
+            <!-- Cropper Area -->
+            <div class="cropper-wrapper shadow-inner" id="cropperArea">
+                <img id="cropperImage" src="">
+            </div>
+
+            <!-- Form -->
+            <form id="profileForm" action="/upload_profile" method="POST" enctype="multipart/form-data">
+                <div class="mb-3">
+                  <label class="btn btn-outline-success rounded-pill px-4 w-100 fw-bold">
+                    <i class="bi bi-camera-fill me-2"></i>Select New Photo
+                    <input type="file" id="profileInput" name="profile_pic" class="d-none" accept="image/*" onchange="initCropper(this)">
+                  </label>
+                </div>
+                
+                <div class="crop-controls" id="cropBtnGroup">
+                  <button type="button" class="btn btn-dark rounded-pill flex-grow-1" onclick="resetCrop()">Cancel</button>
+                  <button type="button" class="btn btn-success rounded-pill flex-grow-1 fw-bold" onclick="saveCrop()">Crop & Upload</button>
+                </div>
+                <input type="hidden" name="cropped_data" id="croppedData">
             </form>
         </div>
       </div>
@@ -132,22 +183,58 @@
       </div>
     </div>
   </div>
+  {% endif %}
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
   <script>
-    function previewImage(input) {
-        if (input.files && input.files[0]) {
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                var preview = document.getElementById('imagePreview');
-                if(!preview) {
-                    var container = document.querySelector('.profile-preview');
-                    container.innerHTML = '<img id="imagePreview" class="w-100 h-100 object-fit-cover">';
-                    preview = document.getElementById('imagePreview');
-                }
-                preview.src = e.target.result;
-            }
-            reader.readAsDataURL(input.files[0]);
+    let cropper;
+    const cropperImage = document.getElementById('cropperImage');
+    const cropperArea = document.getElementById('cropperArea');
+    const initialPreview = document.getElementById('initialPreview');
+    const cropBtnGroup = document.getElementById('cropBtnGroup');
+    const profileInput = document.getElementById('profileInput');
+
+    function initCropper(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          cropperImage.src = e.target.result;
+          cropperArea.style.display = 'block';
+          initialPreview.style.display = 'none';
+          cropBtnGroup.style.display = 'flex';
+          
+          if(cropper) cropper.destroy();
+          cropper = new Cropper(cropperImage, {
+            aspectRatio: 1,
+            viewMode: 1,
+            background: false,
+          });
         }
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    function resetCrop() {
+      cropperArea.style.display = 'none';
+      initialPreview.style.display = 'block';
+      cropBtnGroup.style.display = 'none';
+      profileInput.value = '';
+      if(cropper) cropper.destroy();
+    }
+
+    function saveCrop() {
+      const canvas = cropper.getCroppedCanvas({ width: 400, height: 400 });
+      canvas.toBlob((blob) => {
+        const formData = new FormData();
+        formData.append('profile_pic', blob, 'profile.png');
+        
+        fetch('/upload_profile', {
+          method: 'POST',
+          body: formData
+        }).then(() => {
+          window.location.reload();
+        }).catch(err => alert('Upload failed!'));
+      });
     }
   </script>
 
@@ -155,57 +242,64 @@
     {% block content %}{% endblock %}
   </div>
 
-  <!-- Smart Calculator: Calcy -->
-  {% if request.cookies.get('jwt_token') %}
-  <button id="calcy-btn" class="btn btn-success text-warning rounded-circle shadow-lg" style="position: fixed; top: 80px; right: 20px; z-index: 1050; width: 65px; height: 65px; font-size: 1.8rem; display: flex; align-items: center; justify-content: center; animation: popIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 8px 25px rgba(35, 136, 35, 0.5) !important; transition: transform 0.2s ease;" data-bs-toggle="modal" data-bs-target="#calcyModal" title="Smart Calculator Calcy" onmouseover="this.style.transform='scale(1.1) rotate(10deg)'" onmouseout="this.style.transform='scale(1) rotate(0deg)'">
+  <!-- Smart Calculator: Calcy Pro UI -->
+  {% if request.username %}
+  <button id="calcy-btn" class="btn btn-success text-white shadow-lg" data-bs-toggle="modal" data-bs-target="#calcyModal" title="Smart Calculator Calcy">
     🧮
   </button>
 
   <div class="modal fade" id="calcyModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-sm">
-      <div class="modal-content border-0 shadow-lg" style="background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(15px); border-radius: 20px;">
-        <div class="modal-header text-white border-bottom-0" style="background: linear-gradient(135deg, #1f6b1f, #28a745); border-radius: 20px 20px 0 0;">
-          <h5 class="modal-title fw-bold">🧮 Smart Calcy</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      <div class="modal-content border-0 calc-container">
+        <div class="calc-display-wrapper text-end pt-4 pb-2">
+            <input type="text" id="calcDisplay" class="calc-display" readonly value="0">
         </div>
-        <div class="modal-body p-4">
-          <input type="text" id="calcDisplay" class="form-control mb-3 text-end fs-3 fw-bold" style="border: 2px solid #28a745; background: #f0fff8; color: #1e7e34; border-radius: 12px; height: 60px;" readonly placeholder="0">
-          <div class="row g-2">
-            <div class="col-6"><button class="btn btn-danger w-100 fw-bold border-0 shadow-sm" onclick="calcClear()">Clear</button></div>
-            <div class="col-6"><button class="btn btn-warning text-dark w-100 fw-bold border-0 shadow-sm" onclick="calcBackspace()">⌫ Erase</button></div>
+        <div class="row g-2">
+            <div class="col-6"><button class="calc-btn action" onclick="calcClear()">AC</button></div>
+            <div class="col-3"><button class="calc-btn action" onclick="calcBackspace()">⌫</button></div>
+            <div class="col-3"><button class="calc-btn operator" onclick="calcAppend('/')">÷</button></div>
             
-            <div class="col-3"><button class="btn btn-light w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('7')">7</button></div>
-            <div class="col-3"><button class="btn btn-light w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('8')">8</button></div>
-            <div class="col-3"><button class="btn btn-light w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('9')">9</button></div>
-            <div class="col-3"><button class="btn btn-warning text-dark w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('/')">÷</button></div>
+            <div class="col-3"><button class="calc-btn digit" onclick="calcAppend('7')">7</button></div>
+            <div class="col-3"><button class="calc-btn digit" onclick="calcAppend('8')">8</button></div>
+            <div class="col-3"><button class="calc-btn digit" onclick="calcAppend('9')">9</button></div>
+            <div class="col-3"><button class="calc-btn operator" onclick="calcAppend('*')">×</button></div>
             
-            <div class="col-3"><button class="btn btn-light w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('4')">4</button></div>
-            <div class="col-3"><button class="btn btn-light w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('5')">5</button></div>
-            <div class="col-3"><button class="btn btn-light w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('6')">6</button></div>
-            <div class="col-3"><button class="btn btn-warning text-dark w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('*')">×</button></div>
+            <div class="col-3"><button class="calc-btn digit" onclick="calcAppend('4')">4</button></div>
+            <div class="col-3"><button class="calc-btn digit" onclick="calcAppend('5')">5</button></div>
+            <div class="col-3"><button class="calc-btn digit" onclick="calcAppend('6')">6</button></div>
+            <div class="col-3"><button class="calc-btn operator" onclick="calcAppend('-')">-</button></div>
             
-            <div class="col-3"><button class="btn btn-light w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('1')">1</button></div>
-            <div class="col-3"><button class="btn btn-light w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('2')">2</button></div>
-            <div class="col-3"><button class="btn btn-light w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('3')">3</button></div>
-            <div class="col-3"><button class="btn btn-warning text-dark w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('-')">-</button></div>
+            <div class="col-3"><button class="calc-btn digit" onclick="calcAppend('1')">1</button></div>
+            <div class="col-3"><button class="calc-btn digit" onclick="calcAppend('2')">2</button></div>
+            <div class="col-3"><button class="calc-btn digit" onclick="calcAppend('3')">3</button></div>
+            <div class="col-3"><button class="calc-btn operator" onclick="calcAppend('+')">+</button></div>
             
-            <div class="col-3"><button class="btn btn-light w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('.')">.</button></div>
-            <div class="col-3"><button class="btn btn-light w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('0')">0</button></div>
-            <div class="col-6"><button class="btn btn-warning text-dark w-100 fw-bold border-0 shadow-sm" onclick="calcAppend('+')">+</button></div>
-            
-            <div class="col-12 mt-3"><button class="btn btn-success w-100 fw-bold fs-5 shadow-sm" style="border-radius: 12px;" onclick="calcEval()">=</button></div>
-          </div>
+            <div class="col-6"><button class="calc-btn digit" onclick="calcAppend('0')">0</button></div>
+            <div class="col-3"><button class="calc-btn digit" onclick="calcAppend('.')">.</button></div>
+            <div class="col-3"><button class="calc-btn confirm" onclick="calcEval()">=</button></div>
         </div>
       </div>
     </div>
   </div>
   <script>
     const calcDisplay = document.getElementById('calcDisplay');
-    function calcAppend(val) { calcDisplay.value = calcDisplay.value === '0' || calcDisplay.value === 'Error' ? val : calcDisplay.value + val; }
+    function calcAppend(val) { 
+        if (calcDisplay.value === '0' || calcDisplay.value === 'Error') {
+            calcDisplay.value = val;
+        } else {
+            calcDisplay.value += val;
+        }
+    }
     function calcClear() { calcDisplay.value = '0'; }
-    function calcBackspace() { calcDisplay.value = calcDisplay.value.length > 1 ? calcDisplay.value.slice(0, -1) : '0'; }
+    function calcBackspace() { 
+        calcDisplay.value = calcDisplay.value.length > 1 ? calcDisplay.value.slice(0, -1) : '0'; 
+    }
     function calcEval() { 
-      try { calcDisplay.value = eval(calcDisplay.value) || '0'; }
+      try { 
+        let result = eval(calcDisplay.value);
+        if(!isFinite(result)) throw "Error";
+        calcDisplay.value = Number.isInteger(result) ? result : result.toFixed(2);
+      }
       catch(e) { calcDisplay.value = 'Error'; }
     }
   </script>
